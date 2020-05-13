@@ -20,7 +20,6 @@ public:
 		}
 	}
 	MArray(unsigned char* s) {
-
 		for (int16_t i = 0; s[i] != '\0'; i++) {
 			this->len++;
 		}
@@ -44,22 +43,41 @@ public:
 
 	friend ostream& operator<<(ostream& out, MArray& a);
 
-	virtual MArray operator+(MArray& in_arr) {
-		int max_len = max(this->length(), in_arr.length());
-		int min_len = min(this->length(), in_arr.length());
-
-		MArray ret(max_len);
-
-		for (int i = 0; i < max_len; i++)
+	virtual MArray& operator+(MArray& in_arr)
+	{
+		int size = max(this->length(), in_arr.length());
+		MArray* buffer = new MArray(size);
+		int rank_overflow = 0;
+		for (int i = 0; i < size; i++)
 		{
-			if (i <= min_len) {
-				ret[i] = getArr()[i] + in_arr.getArr()[i];
+			int current_rank_value = rank_overflow;
+			if (i < this->length())
+			{
+				current_rank_value += getArr()[i];
 			}
-			else {
-				ret[i] = ((min_len == this->length()) ? in_arr.getArr()[i] : getArr()[i]);
+
+			if (i < in_arr.length())
+			{
+				current_rank_value += in_arr.getArr()[i];
 			}
+
+			int write_rank_value = current_rank_value % 10;
+			rank_overflow = current_rank_value / 10;
+			buffer->getArr()[i] = write_rank_value;
 		}
-		return ret;
+
+		if (rank_overflow != 0) //осталось несложенное число
+		{
+			unsigned char* src = buffer->arr;
+			buffer->len++;
+			buffer->arr = new unsigned char[buffer->len];
+			for (int i = 0; i < buffer->len; i++)
+			{
+				buffer->arr[i] = src[i];
+			}
+			buffer->arr[len - 1] = rank_overflow;
+		}
+		return *buffer;
 	}
 };
 
@@ -80,16 +98,17 @@ class Decimal : public MArray {
 public:
 	Decimal() : MArray() {
 	};
-	Decimal(int sign, int n) : MArray(n) {
+	Decimal(int sign,int n) : MArray(n) {
 	};
 	Decimal(const MArray& arr) : MArray(arr) {
 	};
 	Decimal(char sign, unsigned char* arr) : MArray(arr) {
 		this->sign = sign;
 	}
-	virtual MArray operator+(MArray& in_arr) override {
+	MArray& operator+(MArray& in_arr) override {
+		unsigned char * src = this->getArr();
 		int max_len = max(this->length(), in_arr.length());
-		Decimal ret(sign, max_len);
+		Decimal ret(sign,max_len);
 
 		int min_len = min(this->length(), in_arr.length());
 		if (sign == '-') {
@@ -120,15 +139,15 @@ public:
 
 };
 
-class String : public MArray {
-public:
+class String: public MArray {
+public: 
 	String() : MArray() {
 	};
 	String(int n) : MArray(n) {
 	};
 	String(unsigned char* s) : MArray(s) {};
 
-	virtual MArray operator+(MArray& in_arr) override {
+	virtual MArray& operator+(MArray& in_arr) override {
 		int length = this->length() + in_arr.length() - 1;
 		String ret(length);
 
@@ -163,14 +182,14 @@ int main()
 	String s(str);
 	String s_2(s);
 	String res;
-	MArray& obj = res;
-	obj = s + s_2;
+    MArray& obj = res;
+	obj= s +s_2;
 	cout << res;
 	delete[] str;;
 
 	Decimal d;
-	Decimal d1('+', 4);
-	Decimal d2('-', 4);
+	Decimal d1('+',4);
+	Decimal d2('-',4);
 	for (int i = 0; i < d1.length(); i++)
 	{
 		int a = 0;
@@ -183,7 +202,7 @@ int main()
 		cin >> a;
 		d2[i] = a;
 	}
-	if (d.sign = '-') {
+	if (d.sign = '-'){
 		Decimal newD = d1 - d2;
 		cout << newD;
 	}
@@ -191,7 +210,7 @@ int main()
 		Decimal newD = d1 + d2;
 		cout << newD;
 	}
-
+	
 
 }
 
